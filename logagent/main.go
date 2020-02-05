@@ -2,6 +2,7 @@ package main
 
 import (
 	"demo/logagent/conf"
+	"demo/logagent/etcd"
 	"demo/logagent/kafka"
 	"demo/logagent/taillog"
 	"fmt"
@@ -20,29 +21,23 @@ func main() {
 		fmt.Println("ini mapto err:", err)
 		return
 	}
-	fmt.Println(appconf)
-	err = kafka.Init([]string{appconf.Address})
+	err = kafka.Init([]string{appconf.KafkaConf.Address}, appconf.KafkaConf.MaxSize)
 	if err != nil {
 		fmt.Println("kafka init err:", err)
 		return
 	}
 	fmt.Println("kafka init success")
-	err = taillog.Init(appconf.FileName)
+	err = etcd.Init([]string{appconf.EtcdConf.Address}, time.Duration(appconf.EtcdConf.Timeout)*time.Second)
 	if err != nil {
-		fmt.Println("taillog init err:", err)
+		fmt.Println("etcd init err:", err)
 		return
 	}
-	fmt.Println("taillog init success")
-	run()
-}
-
-func run() {
-	for {
-		select {
-		case line := <-taillog.ReadLog():
-			kafka.SendKafkaMsg(appconf.Topic, line.Text)
-		default:
-			time.Sleep(time.Second)
-		}
+	fmt.Println("etcd init success")
+	//从etcd中读取配置项
+	logEntryConf, err := etcd.ReadConf(appconf.EtcdConf.Key)
+	if err != nil {
+		fmt.Println("etcd read conf err:", err)
+		return
 	}
+	taillog.Init(logEntryConf)
 }

@@ -2,13 +2,21 @@ package conf
 
 // AppConf ...
 type AppConf struct {
-	KafkaConf   `ini:"kafka"`
-	TaillogConf `ini:"taillog"`
+	KafkaConf `ini:"kafka"`
+	EtcdConf  `ini:"etcd"`
 }
 
 // KafkaConf ...
 type KafkaConf struct {
 	Address string `ini:"address"`
+	MaxSize int    `ini:"chan_max_size"`
+}
+
+// EtcdConf ...
+type EtcdConf struct {
+	Address string `ini:"address"`
+	Key     string `ini:"log_collect_key"`
+	Timeout int    `ini:"timeout"`
 }
 
 // TaillogConf ...
