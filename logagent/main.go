@@ -6,6 +6,7 @@ import (
 	"demo/logagent/kafka"
 	"demo/logagent/taillog"
 	"fmt"
+	"sync"
 	"time"
 
 	"gopkg.in/ini.v1"
@@ -39,5 +40,11 @@ func main() {
 		fmt.Println("etcd read conf err:", err)
 		return
 	}
+	// 监听配置
+	var wg sync.WaitGroup
 	taillog.Init(logEntryConf)
+	NewConfChan := taillog.NewConfChan()
+	wg.Add(1)
+	go etcd.WatchConf(appconf.EtcdConf.Key, NewConfChan)
+	wg.Wait()
 }
