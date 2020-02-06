@@ -1,26 +1,31 @@
 package taillog
 
 import (
+	"context"
+	"demo/logagent/kafka"
 	"fmt"
 	"time"
-
-	"demo/logagent/kafka"
 
 	"github.com/hpcloud/tail"
 )
 
 // TailTask ...
 type TailTask struct {
-	path     string
-	topic    string
-	instance *tail.Tail
+	ctx        context.Context
+	cancelFunc context.CancelFunc
+	path       string
+	topic      string
+	instance   *tail.Tail
 }
 
 // NewTailTask ...
 func NewTailTask(path, topic string) (tailObj *TailTask) {
+	ctx, cancel := context.WithCancel(context.Background())
 	tailObj = &TailTask{
-		path:  path,
-		topic: topic,
+		ctx:        ctx,
+		cancelFunc: cancel,
+		path:       path,
+		topic:      topic,
 	}
 	tailObj.init()
 	return
@@ -47,6 +52,9 @@ func (t *TailTask) init() {
 func (t *TailTask) run() {
 	for {
 		select {
+		case <-t.ctx.Done():
+			fmt.Printf("task %s_%s over", t.path, t.topic)
+			return
 		case line := <-t.instance.Lines:
 			kafka.SendChan(t.topic, line.Text)
 		default:
