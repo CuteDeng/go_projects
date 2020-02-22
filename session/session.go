@@ -1,5 +1,6 @@
 package session
 
+// Session ...
 type Session interface {
 	Set(key string, value interface{}) error
 	Get(key string) (interface{}, error)
